@@ -172,19 +172,3 @@ function GrzyHub:CreateTab(name)
 
     return {CreateButton = CreateButton}
 end
-
--- [[ EXECUTION EXAMPLE ]]
-
-local MainTab = GrzyHub:CreateTab("Main")
-local VisualsTab = GrzyHub:CreateTab("Visuals")
-
-MainTab.CreateButton("Auto Farm (Toggle)", function()
-    print("Auto farm started...")
-    -- Add your Pet Sim logic here
-end)
-
-VisualsTab.CreateButton("Show Hitboxes", function()
-    print("Hitboxes enabled")
-end)
-
-print("Grzy Hub Loaded Successfully!")
