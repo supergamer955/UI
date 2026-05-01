@@ -7,6 +7,12 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
+-- [[ THE CLEANUP LOGIC ]]
+-- This looks for any old Grzy Hubs and deletes them instantly
+if CoreGui:FindFirstChild("GrzyHub_Premium") then
+    CoreGui:FindFirstChild("GrzyHub_Premium"):Destroy()
+end
+
 -- UTILS: Smooth Dragging Function
 local function MakeDraggable(Frame)
     local dragging, dragInput, dragStart, startPos
@@ -37,7 +43,7 @@ function GrzyLib:CreateWindow(Config)
     local HubName = Config.Name or "Grzy Hub"
     
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "GrzyHub_Premium"
+    ScreenGui.Name = "GrzyHub_Premium" -- This Name is what the cleanup logic looks for
     ScreenGui.Parent = CoreGui
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -56,7 +62,7 @@ function GrzyLib:CreateWindow(Config)
     Stroke.Thickness = 1.5
     Stroke.Transparency = 0.5
 
-    -- Sidebar
+    -- Sidebar & Content setup remains the same...
     local Sidebar = Instance.new("Frame")
     Sidebar.Size = UDim2.new(0, 150, 1, 0)
     Sidebar.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
@@ -72,10 +78,8 @@ function GrzyLib:CreateWindow(Config)
     TabContainer.BorderSizePixel = 0
     TabContainer.ScrollBarThickness = 0
     TabContainer.Parent = Sidebar
-    
     Instance.new("UIListLayout", TabContainer).Padding = UDim.new(0, 5)
 
-    -- Content Area
     local ContentHolder = Instance.new("Frame")
     ContentHolder.Size = UDim2.new(1, -160, 1, -20)
     ContentHolder.Position = UDim2.new(0, 155, 0, 10)
@@ -90,8 +94,6 @@ function GrzyLib:CreateWindow(Config)
     Title.TextSize = 20
     Title.BackgroundTransparency = 1
     Title.Parent = Sidebar
-
-    local Tabs = {}
 
     function Tabs:CreateTab(Name)
         local TabBtn = Instance.new("TextButton")
@@ -121,8 +123,6 @@ function GrzyLib:CreateWindow(Config)
             TweenService:Create(TabBtn, TweenInfo.new(0.3), {BackgroundTransparency = 0.7}):Play()
         end)
 
-        local Elements = {}
-
         function Elements:CreateButton(Text, Callback)
             local Button = Instance.new("TextButton")
             Button.Size = UDim2.new(1, -10, 0, 40)
@@ -135,7 +135,6 @@ function GrzyLib:CreateWindow(Config)
             Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 6)
 
             Button.MouseButton1Click:Connect(function()
-                -- Click Animation
                 local T = TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(120, 0, 255)})
                 T:Play()
                 T.Completed:Connect(function()
