@@ -1,71 +1,154 @@
-local GrzyLib = {}
+local GrzyLib = {
+    Tabs = {},
+    SelectedTab = nil
+}
+
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
+
+-- UTILS: Smooth Dragging Function
+local function MakeDraggable(Frame)
+    local dragging, dragInput, dragStart, startPos
+    Frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = Frame.Position
+        end
+    end)
+    Frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            TweenService:Create(Frame, TweenInfo.new(0.15, Enum.EasingStyle.Quart), {
+                Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            }):Play()
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+end
 
 function GrzyLib:CreateWindow(Config)
     local HubName = Config.Name or "Grzy Hub"
     
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "GrzyHub_UI"
+    ScreenGui.Name = "GrzyHub_Premium"
     ScreenGui.Parent = CoreGui
-    
-    -- Main UI Frame
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+    -- Main Frame
     local Main = Instance.new("Frame")
-    Main.Size = UDim2.new(0, 500, 0, 350)
-    Main.Position = UDim2.new(0.5, -250, 0.5, -175)
+    Main.Size = UDim2.new(0, 550, 0, 380)
+    Main.Position = UDim2.new(0.5, -275, 0.5, -190)
     Main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
     Main.BorderSizePixel = 0
     Main.Parent = ScreenGui
-    
-    local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 10)
-    Corner.Parent = Main
+    MakeDraggable(Main)
 
-    local Stroke = Instance.new("UIStroke")
+    Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
+    local Stroke = Instance.new("UIStroke", Main)
     Stroke.Color = Color3.fromRGB(120, 0, 255)
-    Stroke.Thickness = 2
-    Stroke.Parent = Main
+    Stroke.Thickness = 1.5
+    Stroke.Transparency = 0.5
 
-    -- Container for elements
-    local Container = Instance.new("ScrollingFrame")
-    Container.Size = UDim2.new(1, -20, 1, -60)
-    Container.Position = UDim2.new(0, 10, 0, 50)
-    Container.BackgroundTransparency = 1
-    Container.ScrollBarThickness = 2
-    Container.Parent = Main
+    -- Sidebar
+    local Sidebar = Instance.new("Frame")
+    Sidebar.Size = UDim2.new(0, 150, 1, 0)
+    Sidebar.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+    Sidebar.BackgroundTransparency = 0.5
+    Sidebar.BorderSizePixel = 0
+    Sidebar.Parent = Main
+    Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 12)
+
+    local TabContainer = Instance.new("ScrollingFrame")
+    TabContainer.Size = UDim2.new(1, 0, 1, -60)
+    TabContainer.Position = UDim2.new(0, 0, 0, 60)
+    TabContainer.BackgroundTransparency = 1
+    TabContainer.BorderSizePixel = 0
+    TabContainer.ScrollBarThickness = 0
+    TabContainer.Parent = Sidebar
     
-    local Layout = Instance.new("UIListLayout")
-    Layout.Parent = Container
-    Layout.Padding = UDim.new(0, 5)
+    Instance.new("UIListLayout", TabContainer).Padding = UDim.new(0, 5)
+
+    -- Content Area
+    local ContentHolder = Instance.new("Frame")
+    ContentHolder.Size = UDim2.new(1, -160, 1, -20)
+    ContentHolder.Position = UDim2.new(0, 155, 0, 10)
+    ContentHolder.BackgroundTransparency = 1
+    ContentHolder.Parent = Main
 
     local Title = Instance.new("TextLabel")
     Title.Text = HubName
-    Title.Size = UDim2.new(1, 0, 0, 40)
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Title.BackgroundTransparency = 1
+    Title.Size = UDim2.new(1, 0, 0, 60)
+    Title.TextColor3 = Color3.fromRGB(160, 100, 255)
     Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 18
-    Title.Parent = Main
+    Title.TextSize = 20
+    Title.BackgroundTransparency = 1
+    Title.Parent = Sidebar
 
-    local Elements = {}
+    local Tabs = {}
 
-    function Elements:CreateButton(Name, Callback)
-        local Button = Instance.new("TextButton")
-        Button.Size = UDim2.new(1, -10, 0, 35)
-        Button.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-        Button.Text = Name
-        Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-        Button.Font = Enum.Font.Gotham
-        Button.Parent = Container
-        
-        Instance.new("UICorner").Parent = Button
-        
-        Button.MouseButton1Click:Connect(function()
-            Callback()
+    function Tabs:CreateTab(Name)
+        local TabBtn = Instance.new("TextButton")
+        TabBtn.Size = UDim2.new(1, -10, 0, 35)
+        TabBtn.BackgroundColor3 = Color3.fromRGB(120, 0, 255)
+        TabBtn.BackgroundTransparency = 1
+        TabBtn.Text = Name
+        TabBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+        TabBtn.Font = Enum.Font.GothamMedium
+        TabBtn.Parent = TabContainer
+        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
+
+        local Page = Instance.new("ScrollingFrame")
+        Page.Size = UDim2.new(1, 0, 1, 0)
+        Page.Visible = false
+        Page.BackgroundTransparency = 1
+        Page.ScrollBarThickness = 0
+        Page.Parent = ContentHolder
+        Instance.new("UIListLayout", Page).Padding = UDim.new(0, 8)
+
+        TabBtn.MouseButton1Click:Connect(function()
+            for _, v in pairs(ContentHolder:GetChildren()) do v.Visible = false end
+            for _, v in pairs(TabContainer:GetChildren()) do 
+                if v:IsA("TextButton") then TweenService:Create(v, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play() end
+            end
+            Page.Visible = true
+            TweenService:Create(TabBtn, TweenInfo.new(0.3), {BackgroundTransparency = 0.7}):Play()
         end)
+
+        local Elements = {}
+
+        function Elements:CreateButton(Text, Callback)
+            local Button = Instance.new("TextButton")
+            Button.Size = UDim2.new(1, -10, 0, 40)
+            Button.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+            Button.Text = "  " .. Text
+            Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Button.TextXAlignment = Enum.TextXAlignment.Left
+            Button.Font = Enum.Font.Gotham
+            Button.Parent = Page
+            Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 6)
+
+            Button.MouseButton1Click:Connect(function()
+                -- Click Animation
+                local T = TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(120, 0, 255)})
+                T:Play()
+                T.Completed:Connect(function()
+                    TweenService:Create(Button, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(30, 30, 40)}):Play()
+                end)
+                Callback()
+            end)
+        end
+
+        return Elements
     end
 
-    return Elements
+    return Tabs
 end
 
 return GrzyLib
